@@ -1,0 +1,24 @@
+LOAD CSV WITH HEADERS FROM "file:///manga.csv" AS manga
+FIELDTERMINATOR ','
+create(:manga{manga_id:manga.id,titulo_original:manga.title,titulo_ing:manga.title_en,imagem:manga.image_url,num_capitulos:manga.chapters,sendo_publicado:manga.publishing,nota:manga.score,quantos_deram_nota:manga.scored_by,numero_fans:manga.members,num_favoritos:manga.favorites,Autor:manga.author})
+
+LOAD CSV WITH HEADERS FROM "file:///recommendations.csv" AS recomendacao
+FIELDTERMINATOR ','
+create(:recomendacao{se_gosta:recomendacao.id1,vai_gostar:recomendacao.id2,quantos_concordam:recomendacao.votes})
+
+CREATE INDEX id_manga FOR (m:manga)
+ON (m.manga_id)
+
+CREATE INDEX id_se_gosta FOR (r:recomendacao)
+ON (r.se_gosta)
+
+CREATE INDEX id_vai_gostar FOR (r:recomendacao)
+ON (r.vai_gostar)
+
+MATCH (m1:manga),(r:recomendacao),(m2:manga)
+WHERE r.se_gosta = m1.manga_id
+and r.vai_gostar = m2.manga_id
+and m1 != m2
+MERGE (m1)-[Rec:Recomendacao{Quantas_pessoas_recomendao:r.quantos_concordam}]->(m2)
+WITH COUNT(*) AS AFFECTED
+return*
